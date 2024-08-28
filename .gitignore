@@ -1,0 +1,6 @@
+.dist
+.vscode
+venv
+.env
+config.json
+test.py
