@@ -35,7 +35,7 @@ def obtenir_message_chatgpt(prompt):
     return response['choices'][0]['message']['content'].strip()
 
 # Prompt pour GPT-4
-prompt_text = "Le Saviez-vous ? N'oublie pas de commencer ta réponse par #LeSaviezVous et, seulement si tu veux, de finir par un seul autre hashtag de ton choix en rapport avec ce que tu dis. Tu peux aussi ajouter un emoji a ton bon vouloir."
+prompt_text = "Donne-moi une information intéressante en commençant par #LeSaviezVous. L'information doit être vraie et contenir au maximum 150 caractères. Tu peux ajouter un emoji en rapport avec le message. Exemple : #LeSaviezVous Le premier café en Europe a ouvert à Venise en 1645. ☕️"
 attempts = 0
 max_attempts = 5
 success = False
