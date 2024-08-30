@@ -13,11 +13,11 @@ logger.setLevel(logging.INFO)
 load_dotenv()
 
 # Récupération des configurations à partir des variables d'environnement
-api_key = os.getenv('API_KEY')  # Assurez-vous que la casse des noms correspond
-api_secret_key = os.getenv('API_SECRET_KEY')
-access_token = os.getenv('ACCESS_TOKEN')
-access_token_secret = os.getenv('ACCESS_TOKEN_SECRET')
-openai_api_key = os.getenv('OPENAI_API_KEY')
+api_key = os.getenv('api_key')  # Assurez-vous que la casse des noms correspond
+api_secret_key = os.getenv('api_secret_key')
+access_token = os.getenv('access_token')
+access_token_secret = os.getenv('access_token_secret')
+openai_api_key = os.getenv('openai_api_key')
 openai.api_key = openai_api_key
 
 # Authentification Twitter avec OAuth 1.0a
