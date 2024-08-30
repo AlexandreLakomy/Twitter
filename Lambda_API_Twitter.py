@@ -1,19 +1,23 @@
-from dotenv import load_dotenv
-import openai  # type: ignore
 import os
-import random
+from dotenv import load_dotenv
 import tweepy  # type: ignore
+import openai  # type: ignore
+import random
+import logging
 
+# Configurez le logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # Charge les variables d'environnement du fichier .env
 load_dotenv()
 
 # Récupération des configurations à partir des variables d'environnement
-api_key = os.getenv('API_KEY')
-api_secret_key = os.getenv('API_SECRET_KEY')
-access_token = os.getenv('ACCESS_TOKEN')
-access_token_secret = os.getenv('ACCESS_TOKEN_SECRET')
-openai_api_key = os.getenv('OPENAI_API_KEY')
+api_key = os.getenv('api_key')  # Assurez-vous que la casse des noms correspond
+api_secret_key = os.getenv('api_secret_key')
+access_token = os.getenv('access_token')
+access_token_secret = os.getenv('access_token_secret')
+openai_api_key = os.getenv('openai_api_key')
 openai.api_key = openai_api_key
 
 # Authentification Twitter avec OAuth 1.0a
@@ -126,47 +130,50 @@ sujet = [
     "Expéditions scientifiques", "Voyages interstellaires"
 ]
 
-
-# Sélectionne un sujet aléatoire
-sujet_choisi = random.choice(sujet)
-
-# Fonction pour obtenir une réponse de GPT-4 via OpenAI
-def obtenir_message_chatgpt(prompt):
-    # print("Appel à GPT-4 avec le prompt :", prompt)
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-    # print("Réponse reçue.")
-    return response['choices'][0]['message']['content'].strip()
-
-# Prompt pour GPT-4
-prompt_text = (f"Commence ta phrase par #LeSaviezVous. Donne moi une information insolite ou utile et vraie concernant le sujet : {sujet_choisi}, en 150 caractères maximum. "
-                "Si tu le souhaites, tu peux finir ta phrase par un émoji en rapport avec le sujet ou bien alors, finir par un hashtag toujours en rapport avec le sujet")
-attempts = 0
-max_attempts = 5
-success = False
-
-while attempts < max_attempts and not success:
-    message = obtenir_message_chatgpt(prompt_text)
-    # print("Message généré par GPT-4 :", message)
-    
-    # Publier le message sur le compte automatisé
+def lambda_handler(event, context):
     try:
-        # print("Tentative de publication d'un tweet...")
-        response = client.create_tweet(text=message)
-        print("Tweet posté :", message)
-        success = True  # Arrêter la boucle si le tweet est posté avec succès
-    except tweepy.errors.TweepyException as e:
-        print(f"Erreur lors de la publication sur Twitter : {e}")
-        attempts += 1
-        if "403 Forbidden" in str(e):
-            print(f"Tentative {attempts} échouée. Nouvel essai...")
-        else:
-            # Pour toute autre erreur, interrompre la boucle et afficher le message
-            break
+        # Sélectionner un sujet aléatoire
+        sujet_choisi = random.choice(sujet)
+        logger.info(f"Sujet choisi : {sujet_choisi}")
 
-if not success:
-    print(f"Échec après {max_attempts} tentatives.")
+        # Prompt pour GPT-4
+        prompt_text = (f"Commence ta phrase par #LeSaviezVous. Donne moi une information insolite ou utile et vraie concernant le sujet : {sujet_choisi}, en 150 caractères maximum. "
+                       "Si tu le souhaites, tu peux finir ta phrase par un émoji en rapport avec le sujet ou bien alors, finir par un hashtag toujours en rapport avec le sujet")
+        
+        logger.info("Appel à GPT-4 avec le prompt.")
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": prompt_text}
+            ]
+        )
+        
+        message = response['choices'][0]['message']['content'].strip()
+        logger.info(f"Message généré par GPT-4 : {message}")
+        
+        # Publier le message sur Twitter
+        tweet_response = client.create_tweet(text=message)
+        logger.info(f"Tweet posté avec succès. ID du tweet : {tweet_response.data['id']}")
+        
+        return {
+            'statusCode': 200,
+            'body': 'Tweet posted successfully!'
+        }
+    except openai.error.OpenAIError as e:
+        logger.error(f"Erreur OpenAI : {e}")
+        return {
+            'statusCode': 500,
+            'body': f"Erreur OpenAI : {str(e)}"
+        }
+    except tweepy.TweepyException as e:
+        logger.error(f"Erreur Tweepy : {e}")
+        return {
+            'statusCode': 500,
+            'body': f"Erreur Tweepy : {str(e)}"
+        }
+    except Exception as e:
+        logger.error(f"Erreur inconnue : {e}")
+        return {
+            'statusCode': 500,
+            'body': f"Erreur : {str(e)}"
+        }

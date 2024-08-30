@@ -4,3 +4,6 @@ venv
 .env
 config.json
 test.py
+my_lambda_function.zip
+my_lambda_function
+my_lambda_env
